@@ -1,39 +1,47 @@
 import requests
+import json
 from lxml.html import fromstring
 
 
-def crawler():
-    acer_link = 'https://br-store.acer.com/notebook-acer-ph315-52-7210-ci79750h-16gb-nva-6gb-256gb-ssd-2tb-hdd-w10hcsl64-preto-fhd-156-nh-q63al-001/p?idsku=492&gclid=EAIaIQobChMI5qGOvbWW6wIVDBCRCh1dig3VEAYYASABEgK-rPD_BwE'
-
-    resp = requests.get(acer_link)
+def get_root(url, xpath):
+    """
+    Pega o root e retorna o texto da pagina
+    :param url: url da pagina
+    :param xpath: xpath da pagina
+    :return: Preço
+    """
+    resp = requests.get(url)
     root = fromstring(resp.content)
+    price = get_text(root, xpath)
 
-    price = root.xpath('.//strong[contains(@class, "skuBestPrice")]')
+    return price
+
+
+def get_text(root, xpath):
+    """
+    Extrai o texto da pagina
+    :param root: objeto root
+    :param xpath: xpath do texto
+    :return: texto
+    """
+    price = root.xpath(xpath)
     price = price[0].text
 
-    print(f'Preço Acer: {price}')
+    return price
 
-    # Americanas
-    americanas_link = 'https://www.americanas.com.br/produto/1348623153/so-hoje-notebook-gamer-acer-predator-helios-300-ph315-52-7210-rtx2060-tela-144hz-ci7-16gb-ssd-256gb-hd-2tb-win10?WT.srch=1&acc=e789ea56094489dffd798f86ff51c7a9&cor=Preto&epar=bp_pl_00_go_pc_gamer&gclid=EAIaIQobChMI5qGOvbWW6wIVDBCRCh1dig3VEAYYAiABEgKhSPD_BwE&i=573fe673eec3dfb1f801fc8e&o=5ddc1d32f8e95eac3d8815d2&opn=YSMESP&sellerid=11068167000453'
 
-    americanas_resp = requests.get(americanas_link)
-    americanas_root = fromstring(americanas_resp.content)
+def crawler():
+    """
+    Função principal para extrair os textos da pagina
+    :return: None
+    """
+    with open('json_produto.json') as f:
+        data = json.load(f)
 
-    americanas_price = americanas_root.xpath('.//span[contains(@class, "price__SalesPrice")]')
-    americanas_price = americanas_price[0].text
-
-    print(f'Preço Americanas: {americanas_price}')
-
-    # Submarino
-    submarino_link = 'https://www.submarino.com.br/produto/1348623153/so-hoje-notebook-gamer-acer-predator-helios-300-ph315-52-7210-rtx2060-tela-144hz-ci7-16gb-ssd-256gb-hd-2tb-win10?WT.srch=1&acc=d47a04c6f99456bc289220d5d0ff208d&cor=Preto&epar=bp_pl_00_go_pla_pcgamer_geral_gmv&gclid=EAIaIQobChMI5qGOvbWW6wIVDBCRCh1dig3VEAYYCiABEgJ9CvD_BwE&i=573ff205eec3dfb1f803f911&o=5ddc1ca2f8e95eac3d881521&opn=XMLGOOGLE&sellerid=11068167000453'
-
-    submarino_resp = requests.get(submarino_link)
-    submarino_root = fromstring(submarino_resp.content)
-
-    submarino_price = submarino_root.xpath('.//span[contains(@class, "sales-price")]')
-    submarino_price = submarino_price[0].text
-
-    print(f'Preço Submarino: {submarino_price}')
+    for key in data.keys():
+        print('Preço Acer: {}'.format(get_root(data[key][0], './/strong[contains(@class, "skuBestPrice")]')))
+        print('Preço Americanas: {}'.format(get_root(data[key][1], './/span[contains(@class, "price__SalesPrice")]')))
+        print('Preço Submarino: {}'.format(get_root(data[key][2], './/span[contains(@class, "sales-price")]')))
 
 
 if __name__ == '__main__':
