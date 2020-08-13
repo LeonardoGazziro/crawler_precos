@@ -2,6 +2,21 @@ import requests
 import json
 from lxml.html import fromstring
 
+_DICT_XPATH = {
+    'americanas': './/span[contains(@class, "price__SalesPrice")]',
+    'acer.com': './/strong[contains(@class, "skuBestPrice")]',
+    'submarino': './/span[contains(@class, "sales-price")]'
+}
+
+
+def get_xpath_from_dict(link):
+    if 'americanas' in link:
+        return 'americanas', _DICT_XPATH['americanas']
+    elif 'acer.com' in link:
+        return 'acer.com', _DICT_XPATH['acer.com']
+    elif 'submarino' in link:
+        return 'submarino', _DICT_XPATH['submarino']
+
 
 def get_root(url, xpath):
     """
@@ -24,10 +39,13 @@ def get_text(root, xpath):
     :param xpath: xpath do texto
     :return: texto
     """
-    price = root.xpath(xpath)
-    price = price[0].text
+    try:
+        price = root.xpath(xpath)
+        price = price[0].text
 
-    return price
+        return price
+    except Exception as err:
+        raise Exception("Deu erro!! {}".format(err))
 
 
 def crawler():
@@ -39,9 +57,9 @@ def crawler():
         data = json.load(f)
 
     for key in data.keys():
-        print('Preço Acer: {}'.format(get_root(data[key][0], './/strong[contains(@class, "skuBestPrice")]')))
-        print('Preço Americanas: {}'.format(get_root(data[key][1], './/span[contains(@class, "price__SalesPrice")]')))
-        print('Preço Submarino: {}'.format(get_root(data[key][2], './/span[contains(@class, "sales-price")]')))
+        for link in data[key]:
+            site, xpath = get_xpath_from_dict(link)
+            print('Preço do site {}: {}'.format(site, get_root(link, xpath)))
 
 
 if __name__ == '__main__':
