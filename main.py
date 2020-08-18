@@ -1,21 +1,12 @@
 import requests
 import json
 import subprocess as s
+
 from time import sleep
 from datetime import datetime
 from lxml.html import fromstring
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
+from crawler_precos.utils import load_json_products, bcolors
+from crawler_precos.crawler_factory import CrawlerFactory
 
 _DICT_XPATH = {
     'americanas': './/span[contains(@class, "price__SalesPrice")]',
@@ -97,5 +88,50 @@ def crawler():
         sleep(60*15)
 
 
+class Crawler():
+    def __init__(self):
+        self.json = load_json_products()
+        self.crawler_time = self.json['scrap_time']
+        self.os_notify = bool(self.json['os_notify'])
+        self.products_list = self.json['products_list']
+
+    def verify_value_to_notify(self, value, limit, site):
+        try:
+            value_str = value
+            value = value.replace('R$', '').replace('.', '').replace(' ', '')
+            value = value.replace(',', '.')
+            value = float(value)
+            if value <= limit:
+                s.call(['notify-send', site, f'Valor abaixo do limite: {value_str}'])
+        except Exception as err:
+            print(f'Erro na conversao de valor: {err}')
+
+    def run(self):
+        while True:
+            print(f'Realizando consulta: {datetime.now()}')
+            for key in self.products_list.keys():
+                for url in self.products_list[key]['links']:
+                    robo = CrawlerFactory.create_crawler(url)
+                    price, msg = robo.get_root()
+                    if price:
+                        print(msg)
+                        if self.os_notify:
+                            self.verify_value_to_notify(price, self.products_list[key]['wanted_value'], url)
+
+            print('Aguardando!!!\n')
+            sleep(self.crawler_time)
+
+    def extract(self, product):
+        if 'links' in product:
+            for link in product['links']:
+                site, xpath = get_xpath_from_dict(link)
+                value = get_root(link, xpath)
+                verify_value_to_notify(value, 9100, site)
+                print('Preço do site {}{}{}: {}{}{}'.format(bcolors.HEADER, site, bcolors.ENDC, bcolors.OKBLUE,
+                                                            value, bcolors.ENDC))
+
+
 if __name__ == '__main__':
-    crawler()
+    crawler = Crawler()
+    crawler.run()
+    # crawler()
