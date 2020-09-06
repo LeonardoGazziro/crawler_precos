@@ -1,5 +1,5 @@
-from crawler_precos.sites.base import CrawlerBase
-from crawler_precos.utils import bcolors
+from sites.base import CrawlerBase
+from utils import bcolors
 
 
 class Acer(CrawlerBase):

@@ -5,8 +5,8 @@ import subprocess as s
 from time import sleep
 from datetime import datetime
 from lxml.html import fromstring
-from crawler_precos.utils import load_json_products, bcolors
-from crawler_precos.crawler_factory import CrawlerFactory
+from utils import load_json_products, bcolors
+from crawler_factory import CrawlerFactory
 
 _DICT_XPATH = {
     'americanas': './/span[contains(@class, "price__SalesPrice")]',

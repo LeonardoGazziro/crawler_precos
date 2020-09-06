@@ -11,7 +11,7 @@ class CrawlerFactory():
         elif 'submarino' in url:
             crawler = 'Submarino'
 
-        module_path = f'crawler_precos.sites.{crawler.lower()}'
+        module_path = f'sites.{crawler.lower()}'
         module = import_module(module_path)
         cls = getattr(module, crawler)
         return cls.create_instance(url)
