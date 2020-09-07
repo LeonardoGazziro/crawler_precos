@@ -1,9 +1,23 @@
 import json
+from os import getenv
+from components.AWS_utils import S3
 
 
 def load_json_products():
-    with open('json_produto.json') as f:
-        data = json.load(f)
+    s3_bucket_crawler = getenv('S3_BUCKET_CRAWLER', '')
+    crawler_prod_file_name = getenv('S3_CRAWLER_PROD_LIST_FILE', '')
+
+    s3_crawler = S3(s3_bucket_crawler)
+    s3_crawler.create_s3_instance()
+    crawler_json, msg = s3_crawler.get_s3_obj('', crawler_prod_file_name)
+    if crawler_json:
+        data = crawler_json
+    else:
+        data = {
+              "scrap_time": 3600,
+              "os_notify": "True",
+              "products_list": []
+            }
 
     return data
 

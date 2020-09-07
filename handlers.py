@@ -4,6 +4,7 @@ from os import getenv
 from docstring import DOC_STRING
 from utils import json_inserir_prod_valido
 from components.AWS_utils import S3
+from main import Crawler
 
 
 def help_handler(event, context):
@@ -61,7 +62,7 @@ def inserir_json_crawler_handler(event, context):
     # se o arquivo não existir, "False", então cria o arquivo
     if crawler_json == False:
         body = {
-              "scrap_time": 900,
+              "scrap_time": 3600,
               "os_notify": "True",
               "products_list": []
             }
@@ -222,6 +223,17 @@ def ver_ultimo_preco_prod_handler(event, context):
         return {'status': 404, 'msg': 'Produto não encontrado'}
 
 
+def crawler_prods_handler(event, context):
+    """
+    Coleta o valor dos produtos que estão na lista para ser crawleados
+    :param event: informações do Evento da Lambda
+    :param context:  informações do contexto da Lambda
+    :return: None
+    """
+    crawler = Crawler()
+    crawler.run()
+
+
 if __name__ == '__main__':
     # print(help_handler('', ''))
 
@@ -312,4 +324,5 @@ if __name__ == '__main__':
     # listar_produtos_handler('', '')
     # alterar_preco_aviso_handler(ex_event_att_price, '')
     # ver_info_produto_handler(ex_event_att_price, '')
-    ver_ultimos_precos_handler('', '')
+    # ver_ultimos_precos_handler('', '')
+    crawler_prods_handler('', '')

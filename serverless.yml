@@ -154,3 +154,19 @@ functions:
       S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
       S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
       S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+
+  crawler_prods:
+    handler: "handlers.crawler_prods_handler"
+    cloudwatchLog: "/aws/lambda/crawler_prods_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - schedule:
+          rate: rate(60 minutes)
+          enabled: false
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
