@@ -1,0 +1,172 @@
+service: crawler-precos
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+  awsinfos:
+    region: us-east-1
+    accessid: ${opt:accessid}
+    accessseckey: ${opt:accessseckey}
+  s3_info:
+    s3_bucket_novo_prod: 'novo-produto'
+    s3_bucket_crawler: 'produtos-crawleados'
+    s3_crawler_prod_list_file: 'crawler_products_list'
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: dev
+  region: ${self:custom.awsinfos.region}
+
+package:
+  include:
+    - requirements.txt
+
+functions:
+  help:
+      handler: "handlers.help_handler"
+      cloudwatchLog: "/aws/lambda/help_handler"
+      memorySize: 128
+      timeout: 30
+      tracing: Active
+      events:
+        - http:
+            path: help
+            method: GET
+            integration: lambda
+
+  inserir_produto:
+    handler: "handlers.inserir_produto_handler"
+    cloudwatchLog: "/aws/lambda/inserir_produto_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: inserir_produto
+          method: POST
+          integration: lambda
+    environment:
+      S3_BUCKET: "${self:custom.s3_info.s3_bucket_novo_prod}"
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+
+  inserir_json_crawler:
+    handler: "handlers.inserir_json_crawler_handler"
+    cloudwatchLog: "/aws/lambda/inserir_json_crawler_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - s3:
+          bucket: novo-produto
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .json
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
+
+  listar_produtos:
+    handler: "handlers.listar_produtos_handler"
+    cloudwatchLog: "/aws/lambda/listar_produtos_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: listar_produtos
+          method: GET
+          integration: lambda
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
+
+  alterar_preco_aviso:
+    handler: "handlers.alterar_preco_aviso_handler"
+    cloudwatchLog: "/aws/lambda/alterar_preco_aviso_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: alterar_preco_aviso
+          method: POST
+          integration: lambda
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
+
+  ver_info_produto:
+    handler: "handlers.ver_info_produto_handler"
+    cloudwatchLog: "/aws/lambda/ver_info_produto_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: ver_info_produto/{id}
+          method: GET
+          integration: lambda
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+
+  ver_ultimos_precos:
+    handler: "handlers.ver_ultimos_precos_handler"
+    cloudwatchLog: "/aws/lambda/ver_ultimos_precos_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: ver_ultimos_precos
+          method: GET
+          integration: lambda
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
+
+  ver_ultimo_preco_prod:
+    handler: "handlers.ver_ultimo_preco_prod_handler"
+    cloudwatchLog: "/aws/lambda/ver_ultimo_preco_prod_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - http:
+          path: ver_ultimo_preco_prod/{id}
+          method: GET
+          integration: lambda
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+
+  crawler_prods:
+    handler: "handlers.crawler_prods_handler"
+    cloudwatchLog: "/aws/lambda/crawler_prods_handler"
+    memorySize: 128
+    timeout: 30
+    tracing: Active
+    events:
+      - schedule:
+          rate: rate(60 minutes)
+          enabled: false
+    environment:
+      S3_AWS_ACCESS_KEY: "${self:custom.awsinfos.accessid}"
+      S3_AWS_SECRET_KEY: "${self:custom.awsinfos.accessseckey}"
+      S3_BUCKET_CRAWLER: "${self:custom.s3_info.s3_bucket_crawler}"
+      S3_CRAWLER_PROD_LIST_FILE: "${self:custom.s3_info.s3_crawler_prod_list_file}"
